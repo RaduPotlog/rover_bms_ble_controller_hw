@@ -161,6 +161,11 @@ Open schematic findings from the 2026-07-26 review, highest value first. Full wr
       of the 74AHCT125 swap; the 3.3 V side of the translator no longer exists, so `R14` and the OE
       node were removed.
 - [x] ~~TXS0108E is the wrong translator family~~ — **done 2026-07-26**, replaced by `U5` 74AHCT125.
+- [ ] **All bulk electrolytic was removed from the +24V input** (commit `036b3ef`): now `C7`,`C8`,`C9`
+      4.7 µF/50 V X7R 1206 + `C10` 100 nF + `C11` 1 nF, with the 100 µF electrolytic gone. Ceramic is
+      the right choice for ripple current, but an undamped all-ceramic input rings against the supply
+      harness inductance on hot-plug. `D3` clamps, so it is not defenceless — but every hot-plug now
+      dumps into the TVS. Restore bulk, or add an R+C damping leg.
 - [ ] **`PWR_SENS` ADC divider**: `R11` 2.2M / `R12` 470k → ~387 kΩ source impedance into GPIO5,
       with no filter cap. Add 100 nF to GND and drop the divider ~10×. Also decide whether it should
       tap +24V instead of the regulated +5V, which carries little information.
@@ -205,6 +210,18 @@ is no `U1`/`C1`/`R1`/`D1` — fine if deliberate.
 ## 8. Activity Log
 
 <!-- Newest first. Format: ### YYYY-MM-DD — summary, then bullets of what changed and why. -->
+
+### 2026-07-26 — Third schematic review (post-`78e8561`)
+- Current state: **75 components, 316 pins, 84 nets drawn, 280 wires, 34 NC, 0 geometric dangles.**
+  Parse parity 282 + 34 = 316 holds, so the drawing is coherent.
+- **The hierarchy UUID corruption survived a KiCad GUI save and two commits.** Opening and saving
+  does not repair it. KiCad still exports only **14 nets / 145 nodes**, ERC still 36 `wire_dangling`.
+- `036b3ef` rebuilt the +24V bank to all-ceramic and dropped the 100 µF bulk — new finding, see §6.
+- F-01 and F-02 confirmed closed; F-11 (spare translator channels) obsolete — a quad buffer with two
+  spare gates replaced an 8-bit translator with six.
+- Every remaining finding re-verified against the current designators: `R9`/`R12` are now the
+  PWR_SENS divider, `R13` the GPIO0 series, `R14`/`R15` the USB CC pair, `R10`/`R11` the SY8089 FB
+  divider, `R3`/`R8` the LMR51450 FB divider.
 
 ### 2026-07-26 — F-02 implemented: TXS0108E → 74AHCT125
 - Replaced `IC2` (TXS0108E, TSSOP-20) with **`U5` 74AHCT125** (`74xx:74AHCT125`,

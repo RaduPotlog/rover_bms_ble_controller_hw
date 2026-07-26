@@ -147,7 +147,24 @@ New project-local symbols go in `Libs/` and **must** be registered in `sym-lib-t
 
 Open schematic findings, highest value first. Full write-up in §9.
 
-- [x] ~~**CRITICAL — sheet hierarchy UUIDs corrupt**~~ — **fixed 2026-07-26.** Root cause was
+- [ ] **CRITICAL — sheet hierarchy UUIDs corrupt. REOPENED 2026-07-26 (regressed twice).**
+      **A file-level patch does NOT hold.** Applied and verified clean (ERC 0 / 84 nets) twice; both
+      times a KiCad session rewrote the instance paths back to the `/a123a8db-…` root, and the second
+      regression is committed in `e6e960b`. Signature both times: all three sheets **plus
+      `.kicad_pro`** rewritten within seconds — and no script here writes `.kicad_pro`.
+      `kicad-cli sch erc` / `export netlist` were tested directly and do **not** revert it, so the
+      agent is the KiCad GUI.
+      **Untested hypothesis for a durable fix:** `a123a8db` is `TOP.kicad_sch`'s own file UUID, and
+      the dead `(project "BM")` entry suggests TOP was once a project root. Giving **TOP** a fresh
+      UUID as well — so `a123a8db` exists nowhere — may stop KiCad resurrecting it. Must be verified
+      across a real KiCad session, not just with `kicad-cli`.
+      **The check, after every KiCad session:** `kicad-cli sch export netlist` must report **84 nets**.
+- [ ] **Verify the PCB was not updated from the broken netlist.** `e6e960b` rewrote 4 878 lines of
+      `.kicad_pcb` while the design exported only 14 nets. If any of that came from "Update PCB from
+      Schematic", the LED chain, the buck's SW/BOOT/FB/RT nodes, the MOSFET gate network and the USB
+      CC resistors arrived unconnected. Check the ratsnest before more layout work.
+
+- [x] ~~**CRITICAL — sheet hierarchy UUIDs corrupt**~~ — first repair attempt 2026-07-26. Root cause was
       commit `2891a78 "Rename project"`: the root sheet symbol carried *two* instance entries —
       `(project "BM")` with the correct root UUID `b53082d8-…`, and
       `(project "rover_led_udp_controller_hw")` with the wrong one `a123a8db-…` (which is
@@ -181,10 +198,23 @@ Open schematic findings, highest value first. Full write-up in §9.
 - [x] ~~`C19`/`C22` ceramic-vs-tantalum contradiction~~ — **fixed 2026-07-26**, re-footprinted to
       `Capacitor_SMD:C_0603_1608Metric` to match their `22uF/10V/X5R/0603` value and the identical
       `C3`/`C17` elsewhere. They are non-polarized again, so they need no polarized symbol.
-- [ ] **Re-enable the `footprint_filter` ERC rule** — it is set to `ignore` in
-      `rover_led_udp_controller_hw.kicad_pro`, which is why nothing flagged the polarized-footprint
-      mismatch above. Three other rules are also ignored: `four_way_junction`,
-      `simulation_model_issue`, `single_global_label`.
+- [x] ~~Re-enable the `footprint_filter` ERC rule~~ — **done 2026-07-26.** Final severities:
+      `footprint_filter` = **warning**, `single_global_label` = **warning**,
+      `four_way_junction` = **ignore** (the decoupling-bank topology inherently creates 4-way
+      junctions; 11 permanent warnings would mask real ones), `simulation_model_issue` = **ignore**
+      (no simulation models in this design). Enabling `footprint_filter` produced **zero** capacitor
+      violations — the F-18/F-19 work holds.
+- [ ] **Known ERC baseline: 18 `footprint_link_issues`** — surfaced by enabling `footprint_filter`.
+      All are *intentional* footprint choices on generic symbols: `J2`–`J17` are test pads on a
+      `Conn_01x01_Pin` symbol whose filter is `Connector*:*_1x??_*`, plus `D4` and `U4` on OLIMEX
+      footprints. Not defects, but 18 standing warnings will mask a real #19. Proper fix is a
+      test-point symbol for `J2`–`J17`.
+- [ ] **NEW — the TVS does not protect `U2` within its ratings.** Datasheet (now decoded):
+      **`V_IN` absolute maximum = 38 V**, recommended input range **4.0–36 V**. The board's TVS is
+      **SMBJ33A**: 33 V standoff, ~36.7 V breakdown, **53.3 V clamping at full rated surge** — well
+      above the 38 V abs max. It prevents catastrophic failure but does not keep the regulator in
+      spec. A 24 V nominal rail against a 38 V part is a tight corner; consider a lower-clamping TVS
+      (SMBJ26A/28A) and note the bulk electrolytic added in F-17 now matters for this too.
 - [ ] **`PWR_SENS` ADC divider**: `R11` 2.2M / `R12` 470k → ~387 kΩ source impedance into GPIO5,
       with no filter cap. Add 100 nF to GND and drop the divider ~10×. Also decide whether it should
       tap +24V instead of the regulated +5V, which carries little information.
@@ -229,6 +259,41 @@ is no `U1`/`C1`/`R1`/`D1` — fine if deliberate.
 ## 8. Activity Log
 
 <!-- Newest first. Format: ### YYYY-MM-DD — summary, then bullets of what changed and why. -->
+
+### 2026-07-26 — F-05 closed, F-20 and F-06 fixed
+- **F-05 CLOSED — no change needed.** The LMR51450 PDF *is* extractable after all: its fonts are CID
+  encoded, so raw stream text is garbage, but decoding via each font's **`/ToUnicode` CMap**
+  (`beginbfchar` / `beginbfrange`) recovers clean text. Recipe worth reusing for `SY8089AAAC.pdf`.
+  Verdict, quoted: abs max **"EN to PGND −0.3 to V_IN +0.3 V"**, recommended **"EN to PGND: V_IN"**,
+  and the pin description says **"Can be connected to VIN."** Tying EN to +24V is sanctioned.
+  User independently confirmed.
+- Same decode yielded `V_IN` abs max **38 V** and recommended range **4.0–36 V** → new TVS finding
+  in §6.
+- **F-20 fixed** — ERC rules retuned, see §6.
+- **F-06 fixed** — added `R16` 10 kΩ to +3.3V and `C24` 100 nF to GND on the GPIO0 node, ahead of the
+  existing `R13` 100 Ω series resistor. Final topology, verified:
+  `+3.3V ─[R16 10k]─┬─ GPIO0 (U3.27)`, `├─[C24 100nF]─ GND`, `└─[R13 100Ω]─ BUT2 ─ GND`.
+- **Two placement traps hit while adding parts** — both worth remembering:
+  1. Cloning a symbol block and rewriting `(at …)` with a regex that expects `(unit` to follow
+     **fails when the source has `(mirror x)` in between** — the clone silently keeps the original's
+     position and its pins merge with it. Always re-verify the clone's computed pin coordinates.
+  2. The `R` symbol is **horizontal** in library coords (pins at `(±3.81, 0)`); a vertical resistor
+     needs angle **270**, not 0.
+- State after: **78 components, 323 pins, 289 on endpoints + 34 NC, 289 wires, 84 nets, parity OK.**
+  ERC = 18 `footprint_link_issues` (known baseline) + 36 `wire_dangling` (F-16, still open).
+
+### 2026-07-26 — Seventh review (post-`e6e960b`): F-16 reopened, circuit work intact
+- **F-16 regressed a second time and is committed.** ERC back to 36, netlist back to 14 nets. See §6.
+  My earlier "closed" claim was wrong — the correct status was "patched, unverified across a KiCad
+  session". Do not mark a file-level metadata repair as closed until it survives one.
+- **All circuit-level fixes survived**, verified designator-independently (KiCad re-annotated again,
+  so `C25`/`C26` folded into the C-series): 24 V bank = 3× 4.7 µF X7R 1210 (`C5`,`C6`,`C8`) +
+  100 µF `CP_Elec_8x10.5` (`C7`) + 100 nF + 1 nF; polarized audit **zero mismatches** (4 polarized
+  footprints, all on `C_Polarized_Small`); no tantalum lands remain; no bad net names; `U5`
+  74AHCT125; `L2` = `4.7uH/MWSA1003S`; library tables still pinned.
+- Drawing is sound: **317 pins, 283 on endpoints + 34 NC, 282 wires, 84 nets, 0 dangles.**
+- **Audit designator-independently from now on** — this project has been re-annotated four times.
+  Cite values, footprints and net membership, not `Cnn` numbers, when checking whether a fix held.
 
 ### 2026-07-26 — F-17 fixed: 24 V input rebuilt as a hybrid bank
 - `C6` → 100 µF/50 V `CP_Elec_8x10.5` (damping); `C7` → 4.7 µF/50 V X7R 1210 and back to the

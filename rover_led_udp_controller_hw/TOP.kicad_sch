@@ -2,7 +2,7 @@
 	(version 20260306)
 	(generator "eeschema")
 	(generator_version "10.0")
-	(uuid "a123a8db-a151-4387-aa00-5e9926b56231")
+	(uuid "38556dce-9d90-4787-aa86-e198c0a6b0f3")
 	(paper "A5")
 	(lib_symbols
 		(symbol "ESP32-S3-DevKit-LiPo_Rev_B:GND"

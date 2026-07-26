@@ -6072,6 +6072,12 @@
 		(uuid "10de9abe-8ccd-41cd-b3a6-ac9b74d9d3da")
 	)
 	(junction
+		(at 213.36 69.85)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "198ec56a-a6ba-4fde-ad4d-dcd9b5820b73")
+	)
+	(junction
 		(at 259.08 93.98)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6174,6 +6180,12 @@
 		(uuid "5f85eb26-480e-4bc4-9d60-fc4f4a84050b")
 	)
 	(junction
+		(at 213.36 93.98)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6388756e-b285-40b2-8d24-3c421a9bfe59")
+	)
+	(junction
 		(at 106.68 64.77)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6232,12 +6244,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "8205a51a-86d9-4644-9673-161174fe63d2")
-	)
-	(junction
-		(at 214.63 93.98)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "8341107e-5052-4f82-b6de-64edb7fce8ea")
 	)
 	(junction
 		(at 302.26 73.66)
@@ -6340,12 +6346,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "d215f03e-4c98-4120-9309-e0f3df694706")
-	)
-	(junction
-		(at 214.63 69.85)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "d4b7d137-d4ba-4096-ad37-7d69310d4fac")
 	)
 	(junction
 		(at 71.12 64.77)
@@ -7039,16 +7039,6 @@
 	)
 	(wire
 		(pts
-			(xy 214.63 69.85) (xy 222.25 69.85)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "308b4a53-4b7c-4a03-b964-7e2b9781a7c0")
-	)
-	(wire
-		(pts
 			(xy 143.51 204.47) (xy 151.13 204.47)
 		)
 		(stroke
@@ -7729,7 +7719,7 @@
 	)
 	(wire
 		(pts
-			(xy 214.63 80.01) (xy 214.63 93.98)
+			(xy 213.36 80.01) (xy 213.36 93.98)
 		)
 		(stroke
 			(width 0)
@@ -8559,7 +8549,7 @@
 	)
 	(wire
 		(pts
-			(xy 205.74 69.85) (xy 214.63 69.85)
+			(xy 205.74 69.85) (xy 213.36 69.85)
 		)
 		(stroke
 			(width 0)
@@ -8619,16 +8609,6 @@
 	)
 	(wire
 		(pts
-			(xy 214.63 93.98) (xy 222.25 93.98)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ad9b3138-0629-424a-a027-84c83bd5acf7")
-	)
-	(wire
-		(pts
 			(xy 140.97 124.46) (xy 140.97 129.54)
 		)
 		(stroke
@@ -8659,7 +8639,7 @@
 	)
 	(wire
 		(pts
-			(xy 214.63 109.22) (xy 214.63 115.57)
+			(xy 213.36 107.95) (xy 213.36 114.3)
 		)
 		(stroke
 			(width 0)
@@ -8829,7 +8809,7 @@
 	)
 	(wire
 		(pts
-			(xy 214.63 93.98) (xy 214.63 101.6)
+			(xy 213.36 93.98) (xy 213.36 100.33)
 		)
 		(stroke
 			(width 0)
@@ -9089,6 +9069,16 @@
 	)
 	(wire
 		(pts
+			(xy 213.36 69.85) (xy 222.25 69.85)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ca44d6c8-47ae-46bf-be80-ec9d215f0a08")
+	)
+	(wire
+		(pts
 			(xy 449.58 242.57) (xy 403.86 242.57)
 		)
 		(stroke
@@ -9169,7 +9159,7 @@
 	)
 	(wire
 		(pts
-			(xy 214.63 69.85) (xy 214.63 72.39)
+			(xy 213.36 69.85) (xy 213.36 72.39)
 		)
 		(stroke
 			(width 0)
@@ -9349,7 +9339,7 @@
 	)
 	(wire
 		(pts
-			(xy 182.88 93.98) (xy 214.63 93.98)
+			(xy 182.88 93.98) (xy 213.36 93.98)
 		)
 		(stroke
 			(width 0)
@@ -9666,6 +9656,16 @@
 			(type default)
 		)
 		(uuid "f7c87b51-40db-41be-8307-2c875b472136")
+	)
+	(wire
+		(pts
+			(xy 213.36 93.98) (xy 222.25 93.98)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f7d6aeca-4882-4a10-b154-1dda6f9729b7")
 	)
 	(wire
 		(pts
@@ -11230,7 +11230,7 @@
 			)
 		)
 		(property "JLCPCB" "C77055"
-			(at 315.214 79.756 90)
+			(at 352.552 220.726 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -14928,7 +14928,7 @@
 		(dnp no)
 		(uuid "745dceee-809c-4a93-a76e-50b4ae782cd9")
 		(property "Reference" "R4"
-			(at 224.79 76.454 90)
+			(at 220.218 71.882 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -14938,7 +14938,7 @@
 			)
 		)
 		(property "Value" "1k/R0603"
-			(at 219.71 76.708 0)
+			(at 225.044 74.93 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -14981,7 +14981,7 @@
 			)
 		)
 		(property "JLCPCB" "C110776"
-			(at 224.79 71.12 0)
+			(at 219.964 77.724 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -15759,7 +15759,7 @@
 			)
 		)
 		(property "Value" "4.7uH/MWSA1003S"
-			(at 189.992 71.628 0)
+			(at 188.722 71.628 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -16635,7 +16635,7 @@
 	)
 	(symbol
 		(lib_id "ESP32-S3-DevKit-LiPo_Rev_B:R")
-		(at 214.63 76.2 270)
+		(at 213.36 76.2 270)
 		(mirror x)
 		(unit 1)
 		(body_style 1)
@@ -16646,7 +16646,7 @@
 		(dnp no)
 		(uuid "879b3de8-9d2d-4962-a4e4-1b5bcdbac70a")
 		(property "Reference" "R3"
-			(at 217.17 76.454 90)
+			(at 211.836 72.136 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -16656,7 +16656,7 @@
 			)
 		)
 		(property "Value" "100k/1%/R0603"
-			(at 212.09 80.01 0)
+			(at 216.154 78.74 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -16668,7 +16668,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
-			(at 214.63 77.978 90)
+			(at 213.36 77.978 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16679,7 +16679,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 214.63 76.2 0)
+			(at 213.36 76.2 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -16689,7 +16689,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 214.63 76.2 0)
+			(at 213.36 76.2 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -16699,7 +16699,7 @@
 			)
 		)
 		(property "JLCPCB" "C100048"
-			(at 215.646 83.566 0)
+			(at 212.09 85.09 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17242,7 +17242,7 @@
 		(dnp no)
 		(uuid "95887310-bc40-4850-a6a8-185dcd1f19cd")
 		(property "Reference" "R7"
-			(at 313.69 98.298 0)
+			(at 310.642 98.806 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17295,7 +17295,7 @@
 			)
 		)
 		(property "JLCPCB" "C95204"
-			(at 319.532 98.806 0)
+			(at 317.246 99.06 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17692,7 +17692,7 @@
 	)
 	(symbol
 		(lib_id "ESP32-S3-DevKit-LiPo_Rev_B:R")
-		(at 214.63 105.41 270)
+		(at 213.36 104.14 270)
 		(mirror x)
 		(unit 1)
 		(body_style 1)
@@ -17703,7 +17703,7 @@
 		(dnp no)
 		(uuid "9a039ebe-95de-4c9f-acc4-c3e835c65cbf")
 		(property "Reference" "R8"
-			(at 216.916 101.854 90)
+			(at 215.646 100.584 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17713,7 +17713,7 @@
 			)
 		)
 		(property "Value" "19.1k/1%/R0603"
-			(at 212.09 105.664 0)
+			(at 210.82 104.394 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17723,7 +17723,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
-			(at 214.63 107.188 90)
+			(at 213.36 105.918 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -17734,7 +17734,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 214.63 105.41 0)
+			(at 213.36 104.14 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17744,7 +17744,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 214.63 105.41 0)
+			(at 213.36 104.14 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17754,7 +17754,7 @@
 			)
 		)
 		(property "JLCPCB" "C173754"
-			(at 217.17 107.696 0)
+			(at 215.9 106.426 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -19379,7 +19379,7 @@
 	)
 	(symbol
 		(lib_id "ESP32-S3-DevKit-LiPo_Rev_B:GND")
-		(at 214.63 115.57 0)
+		(at 213.36 114.3 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -19389,7 +19389,7 @@
 		(dnp no)
 		(uuid "b33838ab-61e1-4f6f-b3cd-f46d394e3940")
 		(property "Reference" "#PWR020"
-			(at 214.63 121.92 0)
+			(at 213.36 120.65 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19400,7 +19400,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 214.63 119.38 0)
+			(at 213.36 118.11 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -19410,7 +19410,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 214.63 115.57 0)
+			(at 213.36 114.3 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -19420,7 +19420,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 214.63 115.57 0)
+			(at 213.36 114.3 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -19430,7 +19430,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 214.63 115.57 0)
+			(at 213.36 114.3 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects

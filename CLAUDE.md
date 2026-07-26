@@ -44,6 +44,17 @@ Nearly all real circuitry lives in `MCU&LEDS.kicad_sch`; edits usually target th
 
 ## 3. Hardware Architecture
 
+**Input supply — write this down, it decides part choices.** The `+24V_PAD` is fed from a
+**7S Li-ion pack: 25.9 V nominal, 29.4 V fully charged** (4.2 V/cell). It is *not* a regulated
+24.0 V rail. This matters more than it looks:
+
+- any TVS on this rail needs a standoff **≥30 V** — which is why `D3` is SMBJ33A and why the
+  lower-clamping alternatives are unusable (F-21)
+- `U2` LMR51450 has a 38 V absolute maximum, so a charged pack leaves only ~8.6 V of headroom
+- if `PWR_SENS` is ever moved from +5V to the input rail (F-03), the divider must survive 29.4 V
+
+Assuming "24 V means 24.0 V" already produced one wrong recommendation. Don't repeat it.
+
 Designators below are the **post-`adb640e` annotation**. That commit renumbered every part, so any
 older note, netlist, or the existing PCB refers to different designators — see §7.
 
@@ -147,7 +158,22 @@ New project-local symbols go in `Libs/` and **must** be registered in `sym-lib-t
 
 Open schematic findings, highest value first. Full write-up in §9.
 
-- [ ] **CRITICAL — sheet hierarchy UUIDs corrupt. REOPENED 2026-07-26 (regressed twice).**
+- [x] ~~**CRITICAL — sheet hierarchy UUIDs corrupt**~~ — **fixed 2026-07-26 (third attempt, verified).**
+      **Ground truth first:** KiCad's own demo `share/kicad/demos/complex_hierarchy` shows the correct
+      format — a subsheet symbol's path is `/<ROOT FILE uuid>/<sheet-symbol uuid>…`, and the
+      subsheet's *own* file uuid appears in **no** path. That proved `a123a8db`
+      (`TOP.kicad_sch`'s file uuid) being the root element was definitively wrong, and that changing
+      TOP's file uuid is harmless.
+      **What was different this time:** the first two attempts only rewrote the paths, leaving
+      `a123a8db` alive as TOP's file uuid for KiCad to resurrect. This time TOP also got a fresh uuid
+      (`38556dce`), so **`a123a8db` no longer exists anywhere in the project**.
+      **Result: ERC 36 → 0 errors; netlist 14 → 84 nets / 264 nodes.** LED chain connected, all 13
+      `U2` pins, all 14 `U5` pins, GPIO0 boot net and the +24V bank all resolve.
+      **Still to confirm:** it survived `kicad-cli`, but both earlier regressions came from a KiCad
+      **GUI** save, which cannot be tested here. Open the project, save, and re-run
+      `kicad-cli sch export netlist` — it must still say 84 nets.
+
+- [ ] ~~superseded~~ **CRITICAL — sheet hierarchy UUIDs corrupt. (history of the two failed attempts)**
       **A file-level patch does NOT hold.** Applied and verified clean (ERC 0 / 84 nets) twice; both
       times a KiCad session rewrote the instance paths back to the `/a123a8db-…` root, and the second
       regression is committed in `e6e960b`. Signature both times: all three sheets **plus
@@ -209,12 +235,30 @@ Open schematic findings, highest value first. Full write-up in §9.
       `Conn_01x01_Pin` symbol whose filter is `Connector*:*_1x??_*`, plus `D4` and `U4` on OLIMEX
       footprints. Not defects, but 18 standing warnings will mask a real #19. Proper fix is a
       test-point symbol for `J2`–`J17`.
-- [ ] **NEW — the TVS does not protect `U2` within its ratings.** Datasheet (now decoded):
-      **`V_IN` absolute maximum = 38 V**, recommended input range **4.0–36 V**. The board's TVS is
-      **SMBJ33A**: 33 V standoff, ~36.7 V breakdown, **53.3 V clamping at full rated surge** — well
-      above the 38 V abs max. It prevents catastrophic failure but does not keep the regulator in
-      spec. A 24 V nominal rail against a 38 V part is a tight corner; consider a lower-clamping TVS
-      (SMBJ26A/28A) and note the bulk electrolytic added in F-17 now matters for this too.
+- [x] ~~**F-21 — the TVS does not protect `U2` within its ratings**~~ — **assessed 2026-07-26,
+      accepted, no change. `D3` stays SMBJ33A.**
+      Facts: `U2` V_IN abs max **38 V** (recommended 4.0–36 V); `D3` SMBJ33A = 33 V standoff,
+      ~36.7 V breakdown, **53.3 V clamping at full rated surge**.
+      **The supply is a 7S Li-ion pack — 29.4 V fully charged** (see §3). That requires a standoff
+      ≥30 V, so the lower-clamping parts an earlier note suggested are all unusable:
+
+      | Part | Standoff | vs 29.4 V pack | V_C |
+      |---|---|---|---|
+      | SMBJ24A | 24.0 V | conducts hard — pack is ~3 V above its 26.7 V breakdown | 38.9 V |
+      | SMBJ26A / 28A | 26 / 28 V | below pack maximum — conduct | 42.1 / 45.4 V |
+      | SMBJ30A | 30.0 V | only 0.6 V (2 %) margin — too thin | 48.4 V |
+      | **SMBJ33A** | 33.0 V | **3.6 V (12 %) margin — correct** | 53.3 V |
+
+      **Why no substitution can close the gap:** the SMBJ clamping ratio is ~1.6×, so clamping under
+      38 V needs a standoff below ~23.5 V — far under the pack voltage. **Do not re-litigate this
+      with another SMBJ part.** Closing it properly needs *series impedance* between the TVS and
+      `U2` VIN, which is deliberately out of scope.
+      **Residual risk, accepted:** V_C 53.3 V is specified at the full rated 11.3 A pulse. Ordinary
+      hot-plug and switching events are attenuated by `F2`, harness inductance and the 100 µF bulk
+      (`C7`, added under F-17), and clamp well below 53 V. Only a genuinely large surge is exposed.
+- [ ] **Revisit F-21 if motors share the 24 V bus.** Regen and back-EMF can push the bus well above
+      29.4 V — exactly the case the TVS cannot cover. If the drives are on this bus, the
+      series-impedance option is worth reopening.
 - [ ] **`PWR_SENS` ADC divider**: `R11` 2.2M / `R12` 470k → ~387 kΩ source impedance into GPIO5,
       with no filter cap. Add 100 nF to GND and drop the divider ~10×. Also decide whether it should
       tap +24V instead of the regulated +5V, which carries little information.
@@ -281,6 +325,20 @@ is no `U1`/`C1`/`R1`/`D1` — fine if deliberate.
      needs angle **270**, not 0.
 - State after: **78 components, 323 pins, 289 on endpoints + 34 NC, 289 wires, 84 nets, parity OK.**
   ERC = 18 `footprint_link_issues` (known baseline) + 36 `wire_dangling` (F-16, still open).
+
+### 2026-07-26 — F-16 FIXED (third attempt) — netlist complete for the first time
+- **Method that worked: get ground truth before patching.** KiCad's bundled demo
+  `share/kicad/demos/complex_hierarchy` is a 2-level hierarchy and shows the canonical format:
+  `path = /<ROOT FILE uuid>/<sheet-symbol uuid>/…`, and a **subsheet's own file uuid never appears in
+  any path**. That single observation settled a question two earlier attempts had guessed at.
+- **Why the earlier attempts failed:** they rewrote the paths but left `a123a8db` alive as
+  `TOP.kicad_sch`'s file uuid. A KiCad GUI save resurrected it. This time TOP was given a fresh uuid
+  (`38556dce`) so the stale value exists **nowhere** in the project.
+- **Verified:** ERC **36 → 0** errors (only the 18 known `footprint_link_issues` remain);
+  netlist **14 → 84 nets / 264 nodes**; LED chain connected; 13/13 `U2` pins; 14/14 `U5` pins;
+  GPIO0 boot net `{C24.1, R13.2, R14.2, U3.27}`; +24V bank `C5…C10` all present.
+- **Open question:** only `kicad-cli` could be tested. Both earlier regressions came from a GUI save.
+  Confirm by opening in KiCad, saving, and re-running `kicad-cli sch export netlist` → 84 nets.
 
 ### 2026-07-26 — Seventh review (post-`e6e960b`): F-16 reopened, circuit work intact
 - **F-16 regressed a second time and is committed.** ERC back to 36, netlist back to 14 nets. See §6.
@@ -423,7 +481,10 @@ Longer-form write-ups, kept out of the sections above so they stay scannable.
   electrolytic where neighbouring `C5`/`C6` are X7R; `L2`'s value is a bare `4.7uH` with no current
   or DCR rating while `L3` carries a full spec string.
 - 6 of 8 translator channels unused (`IC2` A3–A8 / B3–B8 all NC).
-- `U2.PG` (power-good) left NC — a free supply-health signal into a spare GPIO, unused.
+- **F-12 — `U2.PG` (power-good) left NC. ACCEPTED 2026-07-26, no change.** It is an open-drain
+  output, so floating is electrically safe. Raised only because a supply-health signal into a spare
+  GPIO would have been free. Appears in the netlist as `unconnected-(U2-PG-Pad5)`; that is expected
+  and not a defect. Do not re-raise.
 - **Repo portability**: the *global* `sym-lib-table` maps `MechatronicsAcademy` into a **different
   project's** folder (`rover_bms_ble_controller_hw`). The project-local table shadows it so this
   machine is fine, but a fresh clone inherits a wrong-version library. Same class of problem as the

@@ -147,12 +147,20 @@ New project-local symbols go in `Libs/` and **must** be registered in `sym-lib-t
 
 Open schematic findings from the 2026-07-26 review, highest value first. Full write-up in §9.
 
-- [ ] **`R14` is a 100 kΩ resistor straight across +3.3V→GND, and `IC2` `OE` is hard-tied to +3.3V.**
-      Almost certainly meant to be the TXS0108E OE pull-down. Because OE can never go low and VCCB
-      (+5V) rises before VCCA (+3.3V), the translator drives the LED lines from an undefined A side
-      at every power-up. One-wire fix.
-- [ ] **TXS0108E is the wrong translator family** for push-pull SPI-rate LED clock/data (TXS is the
-      open-drain/I²C part). Consider 74AHCT125 / SN74LVC2T45. Also makes the OE issue moot.
+- [ ] **CRITICAL — the sheet hierarchy UUIDs are corrupt.** `MCU&LEDS.kicad_sch` declares the *same*
+      file UUID as `TOP.kicad_sch` (`a123a8db-a151-4387-aa00-5e9926b56231`), and every symbol
+      instance path in it is rooted at `a123a8db-…` instead of the real root sheet
+      (`b53082d8-eb8a-450c-893c-89cd915c3254`). The sheet-symbol UUIDs (`ed65724d-…` for TOP,
+      `dc69146b-…` for MCU&LEDS) are correct — only the root element and the duplicate file UUID are
+      wrong. **Consequence:** `kicad-cli sch export netlist` yields only **14 nets / 149 nodes** for
+      the whole design — every pin-to-pin wire-only net is missing, and only label- and
+      power-symbol-scoped nets survive. ERC reports 36 `wire_dangling`. Pre-existing as of
+      `adb640e`. Fix before trusting any exported netlist, BOM, or PCB update.
+      **Do not fix by re-annotating** — repair the UUIDs.
+- [x] ~~`R14` across +3.3V→GND with `IC2` `OE` hard-tied~~ — **closed 2026-07-26** as a side effect
+      of the 74AHCT125 swap; the 3.3 V side of the translator no longer exists, so `R14` and the OE
+      node were removed.
+- [x] ~~TXS0108E is the wrong translator family~~ — **done 2026-07-26**, replaced by `U5` 74AHCT125.
 - [ ] **`PWR_SENS` ADC divider**: `R11` 2.2M / `R12` 470k → ~387 kΩ source impedance into GPIO5,
       with no filter cap. Add 100 nF to GND and drop the divider ~10×. Also decide whether it should
       tap +24V instead of the regulated +5V, which carries little information.
@@ -197,6 +205,30 @@ is no `U1`/`C1`/`R1`/`D1` — fine if deliberate.
 ## 8. Activity Log
 
 <!-- Newest first. Format: ### YYYY-MM-DD — summary, then bullets of what changed and why. -->
+
+### 2026-07-26 — F-02 implemented: TXS0108E → 74AHCT125
+- Replaced `IC2` (TXS0108E, TSSOP-20) with **`U5` 74AHCT125** (`74xx:74AHCT125`,
+  `Package_SO:SOIC-14_3.9x8.7mm_P1.27mm`), a single-supply 5 V quad buffer with TTL inputs.
+- Gate A = CLK, gate B = MOSI, both mirrored so the input sits on the right and the existing label
+  wires are reused unchanged. Unused gates C/D have `OE` and `A` tied to GND and `Y` no-connected —
+  no floating CMOS inputs. Power unit: VCC → +5V, GND → GND.
+- `R14` and the OE-to-+3.3V node deleted with it, closing the F-01 finding.
+- The old VCCA decoupling (`C23` 22 µF, `C24` 100 nF) was **kept on +3.3V** as rail decoupling
+  rather than deleted, so the BOM count is unchanged. For layout, one 100 nF belongs at `U5` pin 14.
+- Verified two ways: the geometric parse (parity 286 + 34 NC = 320 pins, 0 dangling) **and**
+  `kicad-cli sch export netlist`, which resolves all 14 `U5` pins onto the intended nets.
+- ERC is unchanged by the edit: **36 violations before, 36 after**, all pre-existing `wire_dangling`.
+- Not touched: the PCB, by explicit instruction.
+
+### 2026-07-26 — Correction: the dangling-wire reports were real
+- Running KiCad's own ERC via `kicad-cli` on the **unmodified** commit `adb640e` produced exactly
+  **36 `wire_dangling` errors** — the same count the MCP server reported. Calling them false
+  positives in the first two reviews was **wrong**.
+- Root-caused to the hierarchy UUID collision now tracked at the top of §6. The geometric parse and
+  KiCad disagreed because the parse works inside a single sheet file and never consults the sheet
+  path, so it cannot see hierarchy corruption. Both were right about different things — and neither
+  alone is sufficient. **Cross-check every future connectivity claim against
+  `kicad-cli sch export netlist`, not just the parse.**
 
 ### 2026-07-26 — Second schematic review (post-`adb640e`)
 - Re-derived the netlist after the re-annotation. **Result: no electrical change** vs. the first

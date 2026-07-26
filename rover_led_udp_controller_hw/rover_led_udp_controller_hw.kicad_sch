@@ -1163,18 +1163,6 @@
 				(justify left top)
 			)
 		)
-		(instances
-			(project "BM"
-				(path "/b53082d8-eb8a-450c-893c-89cd915c3254"
-					(page "2")
-				)
-			)
-			(project "rover_led_udp_controller_hw"
-				(path "/a123a8db-a151-4387-aa00-5e9926b56231"
-					(page "2")
-				)
-			)
-		)
 	)
 	(sheet_instances
 		(path "/"

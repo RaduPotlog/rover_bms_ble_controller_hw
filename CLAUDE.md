@@ -145,27 +145,46 @@ New project-local symbols go in `Libs/` and **must** be registered in `sym-lib-t
 
 <!-- Update as work starts/finishes. Format: - [ ] task — owner/notes -->
 
-Open schematic findings from the 2026-07-26 review, highest value first. Full write-up in §9.
+Open schematic findings, highest value first. Full write-up in §9.
 
-- [ ] **CRITICAL — the sheet hierarchy UUIDs are corrupt.** `MCU&LEDS.kicad_sch` declares the *same*
-      file UUID as `TOP.kicad_sch` (`a123a8db-a151-4387-aa00-5e9926b56231`), and every symbol
-      instance path in it is rooted at `a123a8db-…` instead of the real root sheet
-      (`b53082d8-eb8a-450c-893c-89cd915c3254`). The sheet-symbol UUIDs (`ed65724d-…` for TOP,
-      `dc69146b-…` for MCU&LEDS) are correct — only the root element and the duplicate file UUID are
-      wrong. **Consequence:** `kicad-cli sch export netlist` yields only **14 nets / 149 nodes** for
-      the whole design — every pin-to-pin wire-only net is missing, and only label- and
-      power-symbol-scoped nets survive. ERC reports 36 `wire_dangling`. Pre-existing as of
-      `adb640e`. Fix before trusting any exported netlist, BOM, or PCB update.
-      **Do not fix by re-annotating** — repair the UUIDs.
+- [x] ~~**CRITICAL — sheet hierarchy UUIDs corrupt**~~ — **fixed 2026-07-26.** Root cause was
+      commit `2891a78 "Rename project"`: the root sheet symbol carried *two* instance entries —
+      `(project "BM")` with the correct root UUID `b53082d8-…`, and
+      `(project "rover_led_udp_controller_hw")` with the wrong one `a123a8db-…` (which is
+      `TOP.kicad_sch`'s file UUID). KiCad looked up the live project name, got the wrong root, and
+      hierarchy resolution collapsed. Repair: dropped the dead `"BM"` entry, re-rooted all 150
+      instance paths onto `b53082d8-…`, and gave `MCU&LEDS.kicad_sch` a unique file UUID (it had
+      been a duplicate of TOP's). **ERC 36 → 0 violations; netlist 14 → 84 nets / 256 nodes.**
 - [x] ~~`R14` across +3.3V→GND with `IC2` `OE` hard-tied~~ — **closed 2026-07-26** as a side effect
       of the 74AHCT125 swap; the 3.3 V side of the translator no longer exists, so `R14` and the OE
       node were removed.
 - [x] ~~TXS0108E is the wrong translator family~~ — **done 2026-07-26**, replaced by `U5` 74AHCT125.
-- [ ] **All bulk electrolytic was removed from the +24V input** (commit `036b3ef`): now `C7`,`C8`,`C9`
-      4.7 µF/50 V X7R 1206 + `C10` 100 nF + `C11` 1 nF, with the 100 µF electrolytic gone. Ceramic is
-      the right choice for ripple current, but an undamped all-ceramic input rings against the supply
-      harness inductance on hot-plug. `D3` clamps, so it is not defenceless — but every hot-plug now
-      dumps into the TVS. Restore bulk, or add an R+C damping leg.
+- [x] ~~**HIGH — the +24V input has lost all ceramic bulk**~~ — **fixed 2026-07-26.** Rebuilt as a
+      hybrid bank: `C7`,`C25`,`C26` = 4.7 µF/50 V X7R 1210 (`C_1210_3225Metric`) carry the ~2 A RMS
+      ripple, `C6` = 100 µF/50 V (`CP_Elec_8x10.5`) is the damping element, `C8` 100 nF + `C9` 1 nF
+      unchanged. `C25`/`C26` placed on the existing 8.89 mm cap pitch at x = 88.90 / 80.01, extending
+      the bank left of `C6` along the same rails. **Layout:** ceramics closest to `U2` VIN/PGND,
+      electrolytic behind; `C6` grows from 4×5.7 mm to 8×10.5 mm.
+
+- [ ] **⚠ OPERATIONAL — the F-16 hierarchy repair was silently reverted once mid-session.** After it
+      was applied and verified, all three sheets reverted to the broken `a123a8db-…` root and the
+      netlist collapsed back to 14 nets. Tell-tale: `.kicad_pro` was rewritten at the same instant,
+      and **no script here writes that file** — so a KiCad process did it. A controlled test showed
+      `kicad-cli sch erc` / `export netlist` do **not** revert it, so the likely cause is a KiCad GUI
+      session flushing stale in-memory state. **Close KiCad before any scripted edit**, and after any
+      KiCad session re-check with `kicad-cli sch export netlist` — it must say **84 nets**, not 14.
+      The repair is uncommitted; committing makes it durable.
+- [x] ~~Polarized capacitors on a non-polarized symbol~~ — **fixed 2026-07-26.** `C6`,`C7`,`C12`,
+      `C13`,`C18` now use `Device:C_Polarized_Small`, chosen because its pins sit at exactly
+      `(0, ±2.54)` — identical to the old `C` symbol, so the swap moved nothing. KiCad's netlist
+      confirmed pin 1 was already on the positive rail for all five, so polarity is correct.
+- [x] ~~`C19`/`C22` ceramic-vs-tantalum contradiction~~ — **fixed 2026-07-26**, re-footprinted to
+      `Capacitor_SMD:C_0603_1608Metric` to match their `22uF/10V/X5R/0603` value and the identical
+      `C3`/`C17` elsewhere. They are non-polarized again, so they need no polarized symbol.
+- [ ] **Re-enable the `footprint_filter` ERC rule** — it is set to `ignore` in
+      `rover_led_udp_controller_hw.kicad_pro`, which is why nothing flagged the polarized-footprint
+      mismatch above. Three other rules are also ignored: `four_way_junction`,
+      `simulation_model_issue`, `single_global_label`.
 - [ ] **`PWR_SENS` ADC divider**: `R11` 2.2M / `R12` 470k → ~387 kΩ source impedance into GPIO5,
       with no filter cap. Add 100 nF to GND and drop the divider ~10×. Also decide whether it should
       tap +24V instead of the regulated +5V, which carries little information.
@@ -210,6 +229,43 @@ is no `U1`/`C1`/`R1`/`D1` — fine if deliberate.
 ## 8. Activity Log
 
 <!-- Newest first. Format: ### YYYY-MM-DD — summary, then bullets of what changed and why. -->
+
+### 2026-07-26 — F-17 fixed: 24 V input rebuilt as a hybrid bank
+- `C6` → 100 µF/50 V `CP_Elec_8x10.5` (damping); `C7` → 4.7 µF/50 V X7R 1210 and back to the
+  non-polarized symbol; **new `C25`, `C26`** = 4.7 µF/50 V X7R 1210. `C8`/`C9` untouched.
+- Rails re-segmented at x = 80.01 and 88.90 with junctions, matching the existing 8.89 mm cap pitch.
+- Verified: **ERC 0 violations, netlist 84 nets / 260 nodes** (+4 nodes = two new caps × two pins),
+  LED chain intact, all 13 `U2` pins present. 80 components total (76 on the main sheet + 4 holes).
+- **Mid-session the F-16 repair reverted** and had to be re-applied — see the ⚠ item in §6. This is
+  the single most important operational fact in this file right now.
+
+### 2026-07-26 — Safe-set fixes applied (F-16, F-18, F-19, F-08, F-10, F-14)
+- **F-16 hierarchy repair** — see §6. **ERC 36 → 0; netlist 14 → 84 nets / 256 nodes.**
+- **F-18 / F-19** — five electrolytics moved to `Device:C_Polarized_Small`; `C19`/`C22` returned to
+  ceramic 0603.
+- **F-08** — six net names sanitised (12 label occurrences):
+  `GPIO0_BUT1`, `GPIO5_PWR_SENS`, `GPIO11_FSPID_SPI3_MOSI`, `GPIO12_FSPICLK_SPI3_CLK`,
+  `GPIO19_USB_DM`, `GPIO20_USB_DP`. No backslashes or parentheses remain in any user net name.
+- **F-10** — `L2` value → `4.7uH/MWSA1003S` (series taken from its own footprint). **Current rating
+  still unspecified** — needs the real part.
+- **F-14** — pinned the KiCad-stock libraries explicitly in the project tables: `74xx`, `LED` in
+  `sym-lib-table`; `Package_SO`, `Capacitor_SMD`, `Resistor_SMD`, `LED_SMD`, `Diode_SMD`, `Fuse`,
+  `Inductor_SMD`, `Package_TO_SOT_SMD` in `fp-lib-table`. The repo no longer depends on the machine's
+  global table for stock parts. **Still machine-dependent:** the `OLIMEX_*` libraries live in
+  `C:/Users/potlo/Desktop/olimex_kicad_libs/`, outside the repo — vendoring them into `Libs/` is a
+  separate call.
+- **Verification** — the pre-cosmetic and post-cosmetic netlists were compared node-set by node-set:
+  **84 nets, 84 identical, 0 added, 0 removed.** Connectivity provably unchanged by F-18/19/08/10.
+- Not touched: the PCB.
+
+### 2026-07-26 — Fourth schematic review (post-`22ae4da` "PCB redesign")
+- Current state: **74 components, 313 pins, 84 nets drawn, 277 wires, 34 NC, 0 geometric dangles.**
+  Parity 279 + 34 = 313 holds.
+- **The hierarchy UUID defect is unchanged for a third consecutive review** — and `22ae4da` starts a
+  PCB redesign, so it is now actively blocking: "Update PCB from Schematic" would import **14 nets**.
+- +24V bank swung back to all-electrolytic; two new capacitor findings (polarized-symbol mismatch,
+  ceramic-vs-tantalum contradiction). All three recorded in §6.
+- `U5` 74AHCT125 re-verified intact; F-01 / F-02 / F-11 remain closed.
 
 ### 2026-07-26 — Third schematic review (post-`78e8561`)
 - Current state: **75 components, 316 pins, 84 nets drawn, 280 wires, 34 NC, 0 geometric dangles.**

@@ -1106,7 +1106,7 @@
         "uuid": "a123a8db-a151-4387-aa00-5e9926b56231"
       }
     ],
-    "used_designators": "",
+    "used_designators": "J2-17,IC2,R2-16,#FLG2-5,D2-14,#PWR2,#PWR7-18,#PWR20-59,BUT2,C2-24,F2,L2-3,Q2,RST2,U2-4,USB\\-C2",
     "variants": []
   },
   "sheets": [

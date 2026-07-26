@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "kicad": {
+      "type": "stdio",
+      "command": "${KICAD_PYTHON:-C:\\Program Files\\KiCad\\10.0\\bin\\python.exe}",
+      "args": ["-m", "kicad_mcp_server"],
+      "cwd": "${KICAD_MCP_SERVER_HOME:-C:\\Users\\potlo\\tools\\kicad-mcp-server}",
+      "env": {
+        "KICAD_PROJECT_PATHS": "${KICAD_PROJECT_PATHS:-C:\\Users\\potlo\\Desktop\\rover_led_udp_controller_hw\\rover_led_udp_controller_hw}",
+        "DEFAULT_SUMMARY_DETAIL_LEVEL": "detailed",
+        "INCLUDE_NETS_IN_SUMMARY": "true",
+        "INCLUDE_POWER_IN_SUMMARY": "true",
+        "DEFAULT_TEST_FRAMEWORK": "esp_idf",
+        "DEFAULT_TEST_TYPE": "connectivity"
+      }
+    }
+  }
+}

@@ -6093,6 +6093,12 @@
 		(uuid "4d8a2d6b-5427-4dc5-9fb9-5b5e8c4a774b")
 	)
 	(junction
+		(at 190.5 118.11)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "4f52f4e9-c257-4a72-95fb-d521dc1bda05")
+	)
+	(junction
 		(at 186.69 86.36)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6139,12 +6145,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "6b05608b-a7e9-438e-9c36-747593a476f8")
-	)
-	(junction
-		(at 190.5 118.11)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "6bf6b7fa-73d8-4355-b1bf-36053ed9bc03")
 	)
 	(junction
 		(at 266.7 68.58)
@@ -9280,7 +9280,7 @@
 	)
 	(wire
 		(pts
-			(xy 190.5 109.22) (xy 190.5 118.11)
+			(xy 190.5 111.76) (xy 190.5 118.11)
 		)
 		(stroke
 			(width 0)
@@ -12717,7 +12717,7 @@
 			)
 		)
 		(property "JLCPCB" "C6890985"
-			(at 167.132 90.932 0)
+			(at 166.37 91.44 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -15885,7 +15885,7 @@
 			)
 		)
 		(property "Value" "+24V_PAD"
-			(at 37.084 56.642 90)
+			(at 37.084 56.134 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -21213,7 +21213,7 @@
 	)
 	(symbol
 		(lib_id "ESP32-S3-DevKit-LiPo_Rev_B:+3.3V")
-		(at 190.5 109.22 0)
+		(at 190.5 111.76 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -21223,7 +21223,7 @@
 		(dnp no)
 		(uuid "d481931c-2bd1-4e02-9609-3f5d04a321bc")
 		(property "Reference" "#PWR020"
-			(at 190.5 113.03 0)
+			(at 190.5 115.57 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21234,7 +21234,7 @@
 			)
 		)
 		(property "Value" "+3.3V"
-			(at 190.246 105.664 0)
+			(at 190.246 108.204 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -21244,7 +21244,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 190.5 109.22 0)
+			(at 190.5 111.76 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -21254,7 +21254,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 190.5 109.22 0)
+			(at 190.5 111.76 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -21264,7 +21264,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 190.5 109.22 0)
+			(at 190.5 111.76 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
